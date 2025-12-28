@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/loader", "crates/cli", "crates/macro", "crates/common"]
+resolver = "3"
+
+[profile.release-opt]
+inherits = "release"
+lto = "fat"
+strip = true
+codegen-units = 1
+panic = "abort"
