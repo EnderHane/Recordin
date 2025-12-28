@@ -1,6 +1,7 @@
 use std::{
     iter::FusedIterator,
     marker::PhantomData,
+    ops::ControlFlow,
     slice,
 };
 
@@ -9,17 +10,26 @@ use crate::envs;
 mod video_codec;
 mod vulkan;
 
-pub(super) fn init() -> anyhow::Result<()> {
+pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyhow::Result<()>> {
     if envs::FPS.is_some() {
         #[allow(clippy::single_match)]
         match envs::GRAPHICS_SYSTEM.as_deref() {
             Some("vulkan") => {
-                vulkan::init()?;
+                vulkan::lib_load_hook(filename, h_module)?;
             }
             _ => {}
         }
     }
-    Ok(())
+    ControlFlow::Continue(())
+}
+
+pub(super) fn init_early_loaded() -> Option<anyhow::Result<usize>> {
+    envs::FPS.as_ref()?;
+    match envs::GRAPHICS_SYSTEM.as_deref()? {
+        "vulkan" => Some(vulkan::init_early_loaded()),
+        "d3d12" => unimplemented!(),
+        _ => None,
+    }
 }
 
 #[derive(Debug)]

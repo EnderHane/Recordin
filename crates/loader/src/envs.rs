@@ -27,13 +27,7 @@ use regex::{
     Regex,
     RegexBuilder,
 };
-use windows_sys::{
-    Win32::System::Environment::GetCommandLineW,
-    core::{
-        PCSTR,
-        PCWSTR,
-    },
-};
+use windows_sys::Win32::System::Environment::GetCommandLineW;
 
 pub static FORCE_TICK_THRESHOLD: LazyLock<Option<u64>> = LazyLock::new(|| {
     let a = std::env::var_os(ENV_KEY_FORCE_TICK_THRES)?;
@@ -128,50 +122,6 @@ pub static LOG_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 
 pub static ALLOC_CONSOLE: LazyLock<bool> =
     LazyLock::new(|| std::env::var_os(ENV_KEY_ALLOC_CONSOLE).is_some());
-
-pub unsafe fn should_inject_a(p_app_name: PCSTR, p_cmdline: PCSTR) -> bool {
-    let Some(re) = TARGET_REGEX.as_ref() else {
-        return false;
-    };
-    unsafe {
-        if !p_app_name.is_null() {
-            let Ok(name) = windows_strings::PCSTR::from_raw(p_app_name).to_string() else {
-                return false;
-            };
-            re.is_match(&name)
-        } else if !p_cmdline.is_null() {
-            let Ok(cmd) = windows_strings::PCSTR::from_raw(p_cmdline).to_string() else {
-                return false;
-            };
-            let argv = winsplit::split(&cmd);
-            argv.first().is_some_and(|s| re.is_match(s))
-        } else {
-            false
-        }
-    }
-}
-
-pub unsafe fn should_inject_w(p_app_name: PCWSTR, p_cmdline: PCWSTR) -> bool {
-    let Some(re) = TARGET_REGEX.as_ref() else {
-        return false;
-    };
-    unsafe {
-        if !p_app_name.is_null() {
-            let Ok(name) = windows_strings::PCWSTR::from_raw(p_app_name).to_string() else {
-                return false;
-            };
-            re.is_match(&name)
-        } else if !p_cmdline.is_null() {
-            let Ok(cmd) = windows_strings::PCWSTR::from_raw(p_cmdline).to_string() else {
-                return false;
-            };
-            let argv = winsplit::split(&cmd);
-            argv.first().is_some_and(|s| re.is_match(s))
-        } else {
-            false
-        }
-    }
-}
 
 pub fn this_exe() -> String {
     let cmd = CMDLINE.to_string_lossy();

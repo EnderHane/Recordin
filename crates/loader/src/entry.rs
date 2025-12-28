@@ -32,7 +32,7 @@ extern "system" fn DllMain(
 fn on_attach() -> Option<()> {
     start_logger();
     alloc_console();
-    hooks::init().inspect_err(|e| log::error!("{:?}", e)).ok()?;
+    hooks::init().inspect_err(|e| log::warn!("{:?}", e)).ok()?;
     Some(())
 }
 
