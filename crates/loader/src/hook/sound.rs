@@ -13,7 +13,7 @@ use windows_sys::Win32::{
     System::Threading::SetEvent,
 };
 
-use crate::envs;
+use crate::env;
 
 mod audio_codec;
 mod wasapi;
@@ -50,9 +50,9 @@ pub(super) fn com_hook(
     iid: *const windows_sys::core::GUID,
     out_v: *mut *mut core::ffi::c_void,
 ) -> ControlFlow<windows_sys::core::HRESULT> {
-    if envs::AUDIO_OUTPUT.is_some() {
+    if env::AUDIO_OUTPUT.is_some() {
         #[allow(clippy::single_match)]
-        match envs::SOUND_SYSTEM.as_deref() {
+        match env::SOUND_SYSTEM.as_deref() {
             Some("wasapi") => {
                 wasapi::wasapi_hook(cls_id, outer, cls_context, iid, out_v)?;
             }

@@ -8,18 +8,15 @@ use vulkanalia::{
     },
 };
 
-use crate::{
-    envs,
-    hooks::{
-        graphics::vulkan::{
-            devices::{
-                DEVICES,
-                QUEUES,
-            },
-            swapchains::SWAPCHAINS,
+use crate::hook::{
+    graphics::vulkan::{
+        device::{
+            DEVICES,
+            QUEUES,
         },
-        times,
+        swap_chain::SWAP_CHAINS,
     },
+    timing,
 };
 
 #[allow(dead_code, non_snake_case)]
@@ -40,15 +37,16 @@ pub(super) unsafe extern "system" fn my_vkQueuePresentKHR(
     let info = unsafe { *present_info };
     let present_count = info.swapchain_count as usize;
     unsafe {
-        let swapchains = slice::from_raw_parts(info.swapchains, present_count);
+        let swap_chains = slice::from_raw_parts(info.swapchains, present_count);
         let image_indices = slice::from_raw_parts(info.image_indices, present_count);
         let original_semaphores =
             slice::from_raw_parts(info.wait_semaphores, info.wait_semaphore_count as _);
         let mut new_semaphores = vec![];
         for i in 0..present_count {
-            let chain = swapchains[i];
+            let chain = swap_chains[i];
             let image_i = image_indices[i];
-            let mut chain_st = SWAPCHAINS.get_mut(&chain).unwrap();
+            let mut chain_st = SWAP_CHAINS.get_mut(&chain).unwrap();
+            chain_st.pre_copy();
             new_semaphores.push(chain_st.copy_semaphore);
             let dev = &dev_st;
             let swap_image = chain_st.swap_images[image_i as usize];
@@ -154,18 +152,16 @@ pub(super) unsafe extern "system" fn my_vkQueuePresentKHR(
             dev.end_command_buffer(cmd_buf)
                 .expect("Failed to end command buffer");
             let cbs = [cmd_buf];
-            let semas = [chain_st.copy_semaphore];
+            let semaphores = [chain_st.copy_semaphore];
             let submit_info = vk::SubmitInfo::builder()
                 .command_buffers(&cbs)
                 .wait_semaphores(original_semaphores)
-                .signal_semaphores(&semas);
+                .signal_semaphores(&semaphores);
             dev.queue_submit(dev_st.transfer_queue, &[submit_info], chain_st.fence)
                 .expect("Failed to submit to queue");
             dev.wait_for_fences(&[chain_st.fence], true, u64::MAX)
                 .expect("Failed to wait for fence");
-            if envs::should_emit_video() {
-                chain_st.post_copy();
-            }
+            chain_st.post_copy();
             dev.reset_fences(&[chain_st.fence])
                 .expect("Failed to reset fence");
         }
@@ -173,7 +169,7 @@ pub(super) unsafe extern "system" fn my_vkQueuePresentKHR(
         new_present_info.wait_semaphore_count = new_semaphores.len() as _;
         new_present_info.wait_semaphores = new_semaphores.as_ptr();
         let res = dev_st.vkQueuePresentKHR()(queue, &new_present_info);
-        times::incr_tick();
+        timing::incr_tick();
         res
     }
 }

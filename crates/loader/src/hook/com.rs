@@ -2,7 +2,7 @@ use std::ops::ControlFlow;
 
 use windows_sys::Win32::System::Com::CoCreateInstance;
 
-use crate::hooks::sound;
+use crate::hook::sound;
 
 #[recordin_macro::static_hook]
 #[allow(dead_code)]

@@ -18,7 +18,7 @@ use vulkanalia::{
     },
 };
 
-use crate::hooks::{
+use crate::hook::{
     graphics,
     graphics::{
         video_codec,
@@ -27,14 +27,14 @@ use crate::hooks::{
             SURFACE_COUNTER,
         },
         vulkan::{
-            devices::DEVICES,
-            instances::{
+            device::DEVICES,
+            instance::{
                 INSTANCES,
                 PHYSICAL_DEVICES,
             },
         },
     },
-    times,
+    timing,
 };
 
 #[allow(dead_code, non_snake_case)]
@@ -63,28 +63,32 @@ pub(super) unsafe extern "system" fn my_vkCreateSwapchainKHR(
                 info.image_extent,
             );
         };
-        let chain_state = SwapchainState::new(device, info, chain).unwrap();
-        SWAPCHAINS.insert(chain, chain_state);
+        let chain_state = SwapChainState::new(device, info, chain).unwrap();
+        SWAP_CHAINS.insert(chain, chain_state);
     }
     res
 }
 
-pub(super) static SWAPCHAINS: LazyLock<DashMap<vk::SwapchainKHR, SwapchainState>> =
+pub(super) static SWAP_CHAINS: LazyLock<DashMap<vk::SwapchainKHR, SwapChainState>> =
     LazyLock::new(DashMap::new);
 
 #[allow(dead_code, non_snake_case)]
 pub(super) unsafe extern "system" fn my_vkDestroySwapchainKHR(
     device: vk::Device,
-    swapchain: vk::SwapchainKHR,
+    swap_chain: vk::SwapchainKHR,
     allocator: *const vk::AllocationCallbacks,
 ) {
     log::trace!("vkDestroySwapchainKHR");
     #[cfg(debug_assertions)]
-    log::debug!("Destroy VkSwapchainKHR@{swapchain:?} on VkDevice@{device:?}");
+    log::debug!("Destroy VkSwapchainKHR@{swap_chain:?} on VkDevice@{device:?}");
     let dev_st = DEVICES.get(&device).unwrap();
-    let (_, chain_st) = SWAPCHAINS.remove(&swapchain).unwrap();
-    if SWAPCHAINS.is_empty() {
-        times::pause();
+    let (_, chain_st) = SWAP_CHAINS.remove(&swap_chain).unwrap();
+    let fr = chain_st.frame_count as f64;
+    let (t, f) = timing::real();
+    let dT = (t - chain_st.init_real_time) as f64;
+    log::debug!("Average FPS: {}", fr / dT * f as f64);
+    if SWAP_CHAINS.is_empty() {
+        timing::pause();
     }
     unsafe {
         dev_st.free_command_buffers(dev_st.command_pool, &chain_st.command_buffer);
@@ -93,12 +97,12 @@ pub(super) unsafe extern "system" fn my_vkDestroySwapchainKHR(
         dev_st.unmap_memory(chain_st.dst_memory);
         dev_st.free_memory(chain_st.dst_memory, None);
         dev_st.destroy_image(chain_st.dst_image, None);
-        dev_st.vkDestroySwapchainKHR()(device, swapchain, allocator);
+        dev_st.vkDestroySwapchainKHR()(device, swap_chain, allocator);
     }
 }
 
 #[derive(Debug)]
-pub(super) struct SwapchainState {
+pub(super) struct SwapChainState {
     pub(super) swap_images: Vec<vk::Image>,
     pub(super) copy_semaphore: vk::Semaphore,
     pub(super) fence: vk::Fence,
@@ -110,9 +114,11 @@ pub(super) struct SwapchainState {
     pub(super) row_pitch: vk::DeviceSize,
     pub(super) mapped: AtomicPtr<core::ffi::c_void>,
     pub(super) encoder: Option<EncDuplex>,
+    pub(super) init_real_time: i64,
+    pub(super) frame_count: u64,
 }
 
-impl SwapchainState {
+impl SwapChainState {
     fn new(
         device: vk::Device,
         info: vk::SwapchainCreateInfoKHR,
@@ -190,13 +196,20 @@ impl SwapchainState {
                 row_pitch,
                 mapped,
                 encoder,
+                init_real_time: timing::real().0,
+                frame_count: 0,
             })
         }
     }
 }
 
-impl SwapchainState {
-    pub(super) unsafe fn post_copy(&mut self) -> Option<()> {
+impl SwapChainState {
+    pub(super) fn pre_copy(&mut self) -> Option<()> {
+        self.frame_count += 1;
+        Some(())
+    }
+
+    pub(super) fn post_copy(&mut self) -> Option<()> {
         unsafe {
             let mut packed_bgr = self.encoder.as_ref()?.1.recv().ok()?;
             packed_bgr.resize((self.width * self.height) as _, [0; _]);

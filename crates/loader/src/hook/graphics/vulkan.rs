@@ -1,10 +1,11 @@
-mod devices;
-mod instances;
-mod preseting;
-mod swapchains;
+mod device;
+mod instance;
+mod present;
+mod swap_chain;
 
 use std::{
     ops::ControlFlow,
+    path::Path,
     sync::OnceLock,
 };
 
@@ -20,7 +21,10 @@ use vulkanalia::{
 static ENTRY: OnceLock<Entry> = OnceLock::new();
 
 pub(super) fn lib_load_hook(filename: &str, module: usize) -> ControlFlow<anyhow::Result<()>> {
-    if filename.contains("vulkan-1") {
+    let path: &Path = filename.as_ref();
+    if let Some(name) = path.file_stem()
+        && name == "vulkan-1"
+    {
         log::trace!("LoadLibrary vulkan-1.dll: {}", filename);
         unsafe {
             let lib_vulkan = Library::from_raw(module as _);
@@ -50,7 +54,7 @@ fn init_entry(lib_vulkan: &Library) -> anyhow::Result<()> {
     #[allow(non_snake_case)]
     let pfn_vkCreateInstance = ENTRY.get_or_init(|| entry).commands().create_instance;
     unsafe {
-        instances::init_vkCreateInstance(pfn_vkCreateInstance)?.enable()?;
+        instance::init_vkCreateInstance(pfn_vkCreateInstance)?.enable()?;
     }
     Ok(())
 }

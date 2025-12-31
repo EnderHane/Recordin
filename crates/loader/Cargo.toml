@@ -21,7 +21,7 @@ retour = "0.4.0-alpha.4"
 scuffle-ffmpeg = { git = "https://github.com/ScuffleCloud/scuffle.git", version = "0.3.5", default-features = false, features = [
     "link_vcpkg_ffmpeg",
 ] }
-vulkanalia = "0.33.0"
+vulkanalia = "0.34.0"
 windows-result = "0.4.1"
 windows-strings = "0.5.1"
 windows-sys = { version = "0.61.2", features = [
@@ -54,6 +54,7 @@ kanal = "0.1.1"
 expanding_slice_rb = "0.2.2"
 widestring = "1.2.1"
 libloading = "0.9.0"
+arrayvec = "0.7.6"
 
 [build-dependencies]
 vcpkg = "0.2.15"

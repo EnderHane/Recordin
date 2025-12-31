@@ -12,8 +12,8 @@ use windows_sys::{
 };
 
 use crate::{
-    envs,
-    hooks,
+    env,
+    hook,
 };
 
 #[unsafe(no_mangle)]
@@ -32,12 +32,14 @@ extern "system" fn DllMain(
 fn on_attach() -> Option<()> {
     start_logger();
     alloc_console();
-    hooks::init().inspect_err(|e| log::warn!("{:?}", e)).ok()?;
+    if let Err(e) = hook::init() {
+        log::warn!("Error occurred while initializing hook: {}", e);
+    }
     Some(())
 }
 
 fn alloc_console() {
-    if *envs::ALLOC_CONSOLE {
+    if *env::ALLOC_CONSOLE {
         log::info!("Allocating Console Enabled");
         unsafe {
             AllocConsole();
@@ -51,7 +53,7 @@ fn start_logger() -> Option<()> {
         Logger,
     };
     let mut logger = Logger::try_with_env().ok()?;
-    if let Some(log_dir) = envs::LOG_DIR.as_ref() {
+    if let Some(log_dir) = env::LOG_DIR.as_ref() {
         logger = logger.log_to_file(FileSpec::default().directory(log_dir));
     }
     let handle = logger.start().ok()?;

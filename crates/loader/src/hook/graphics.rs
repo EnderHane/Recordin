@@ -5,15 +5,15 @@ use std::{
     slice,
 };
 
-use crate::envs;
+use crate::env;
 
 mod video_codec;
 mod vulkan;
 
 pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyhow::Result<()>> {
-    if envs::FPS.is_some() {
+    if env::FPS.get().is_some() {
         #[allow(clippy::single_match)]
-        match envs::GRAPHICS_SYSTEM.as_deref() {
+        match env::GRAPHICS_SYSTEM.as_deref() {
             Some("vulkan") => {
                 vulkan::lib_load_hook(filename, h_module)?;
             }
@@ -24,8 +24,8 @@ pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyh
 }
 
 pub(super) fn init_early_loaded() -> Option<anyhow::Result<usize>> {
-    envs::FPS.as_ref()?;
-    match envs::GRAPHICS_SYSTEM.as_deref()? {
+    env::FPS.get()?;
+    match env::GRAPHICS_SYSTEM.as_deref()? {
         "vulkan" => Some(vulkan::init_early_loaded()),
         "d3d12" => unimplemented!(),
         _ => None,

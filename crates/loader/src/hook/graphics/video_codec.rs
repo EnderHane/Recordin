@@ -22,19 +22,20 @@ use scuffle_ffmpeg::{
     scaler::VideoScaler,
 };
 
-use crate::envs;
+use crate::env;
 
 pub(super) static SURFACE_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 pub(super) type EncDuplex = (kanal::Sender<Vec<[u8; 3]>>, kanal::Receiver<Vec<[u8; 3]>>);
 
 pub(super) fn create_encoder(stream_number: u32, width: usize, height: usize) -> Option<EncDuplex> {
+    env::should_emit_video().then_some({})?;
     let (tx1, rx1) = kanal::bounded(30);
     let (tx2, rx2) = kanal::bounded(30);
     for _ in 0..10 {
         tx2.try_send(Vec::with_capacity(width * height)).ok();
     }
-    let filename = envs::VIDEO_OUTPUT
+    let filename = env::VIDEO_OUTPUT
         .as_ref()?
         .replace("{n}", &stream_number.to_string());
     std::thread::spawn(
@@ -55,12 +56,12 @@ fn loop_encode(
     tx: kanal::Sender<Vec<[u8; 3]>>,
     filename: String,
 ) -> anyhow::Result<()> {
-    let &fps = envs::FPS.as_ref().ok_or(anyhow::anyhow!("FPS not set"))?;
-    let encode_codec_name = envs::VIDEO_ENCODER
-        .as_ref()
+    let fps = env::FPS.get().ok_or(anyhow::anyhow!("FPS not set"))?;
+    let encode_codec_name = env::VIDEO_ENCODER
+        .get()
         .ok_or(anyhow::anyhow!("Video encoder not set"))?;
     log::trace!("Video encoder: {}", encode_codec_name);
-    let args = &envs::VIDEO_ARGS.as_ref().unwrap_or_else(|| {
+    let args = &env::VIDEO_ARGS.as_ref().unwrap_or_else(|| {
         static EMPTY: BTreeMap<String, String> = BTreeMap::new();
         &EMPTY
     });
@@ -80,7 +81,7 @@ fn loop_encode(
             anyhow::Ok(output)
         })?;
         let v_enc = encoder.try_borrow_mut_with(|| {
-            let codec = EncoderCodec::by_name(encode_codec_name)
+            let codec = EncoderCodec::by_name(&encode_codec_name)
                 .ok_or(anyhow::anyhow!("encoder {} not found", encode_codec_name))?;
             let dict =
                 Dictionary::try_from_iter(args.iter().map(|(k, v)| (k.as_str(), v.as_str())))?;

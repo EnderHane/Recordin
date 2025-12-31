@@ -27,13 +27,13 @@ use windows_strings::{
     w,
 };
 
-use crate::hooks::sound::wasapi::{
+use crate::hook::sound::wasapi::{
     audio_client::MyAudioClient,
     property_store::MyDevicePropertyStore,
 };
 
 #[implement(IMMDevice)]
-pub(in crate::hooks::sound) struct MyDevice;
+pub(in crate::hook::sound) struct MyDevice;
 
 impl MyDevice {
     pub fn new() -> Self {

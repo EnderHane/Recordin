@@ -1,21 +1,21 @@
-use crate::envs;
+use crate::env;
 
 mod com;
 mod graphics;
 mod infect;
-mod libload;
+mod lib_load;
 mod sound;
-mod times;
+mod timing;
 
 pub(super) fn init() -> anyhow::Result<()> {
-    if *envs::PROCESS_IS_CLI || *envs::AGGRESSIVE {
+    if *env::PROCESS_IS_CLI || *env::AGGRESSIVE {
         infect::init()?;
     }
-    if *envs::PROCESS_IS_CLI {
+    if *env::PROCESS_IS_CLI {
         return Ok(());
     }
     com::init()?;
-    libload::init()?;
-    times::init()?;
+    lib_load::init()?;
+    timing::init()?;
     Ok(())
 }

@@ -20,7 +20,7 @@ use windows::Win32::{
 use windows_core::implement;
 
 #[implement(IPropertyStore)]
-pub(in crate::hooks::sound) struct MyDevicePropertyStore {
+pub(in crate::hook::sound) struct MyDevicePropertyStore {
     items: [(PROPERTYKEY, PROPVARIANT); 5],
 }
 

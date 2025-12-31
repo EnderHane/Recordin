@@ -12,9 +12,9 @@ use vulkanalia::{
     vk::InstanceV1_0,
 };
 
-use crate::hooks::graphics::vulkan::{
+use crate::hook::graphics::vulkan::{
     ENTRY,
-    devices,
+    device,
 };
 
 #[recordin_macro::static_hook]
@@ -72,7 +72,7 @@ impl InstanceState {
         let pfn_vkDestroyInstance = instance.commands().destroy_instance;
         let pfn_vkCreateDevice = instance.commands().create_device;
         let hook_vkCreateDevice = unsafe {
-            GenericDetour::new(pfn_vkCreateDevice, devices::my_vkCreateDevice).and_then(|h| {
+            GenericDetour::new(pfn_vkCreateDevice, device::my_vkCreateDevice).and_then(|h| {
                 h.enable()?;
                 Ok(h)
             })?

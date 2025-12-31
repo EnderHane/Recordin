@@ -20,8 +20,8 @@ use windows_sys::Win32::{
 };
 
 use crate::{
-    envs,
-    hooks::sound,
+    env,
+    hook::sound,
 };
 
 static PERF_FREQ: AtomicI64 = AtomicI64::new(0);
@@ -34,11 +34,20 @@ static COUNT_PER_TICK: AtomicI64 = AtomicI64::new(0);
 
 static ALARM: AtomicU64 = AtomicU64::new(0);
 
-pub fn get_perf() -> (i64, i64) {
+pub fn perf() -> (i64, i64) {
     let (mut pc, mut f) = (0, 0);
     unsafe {
         QueryPerformanceCounter(&mut pc);
         QueryPerformanceFrequency(&mut f);
+    }
+    (pc, f)
+}
+
+pub fn real() -> (i64, i64) {
+    let (mut pc, mut f) = (0, 0);
+    unsafe {
+        orig_QueryPerformanceCounter(&mut pc);
+        orig_QueryPerformanceFrequency(&mut f);
     }
     (pc, f)
 }
@@ -161,7 +170,7 @@ unsafe extern "system" fn GetTickCount64() -> u64 {
 }
 
 pub(super) fn init() -> anyhow::Result<()> {
-    if let Some(&v) = envs::FORCE_TICK_THRESHOLD.as_ref() {
+    if let Some(&v) = env::FORCE_TICK_THRESHOLD.as_ref() {
         FORCE_TICK_THRESHOLD.store(v, Ordering::Relaxed);
     }
     let mut freq = 0;
@@ -171,7 +180,7 @@ pub(super) fn init() -> anyhow::Result<()> {
         QueryPerformanceCounter(&mut init);
     }
     BASE_COUNT.store(init, Ordering::Relaxed);
-    let fps = envs::FPS.unwrap_or(60.);
+    let fps = env::FPS.get().unwrap_or(60.);
     PERF_FREQ.store(freq, Ordering::Relaxed);
     let count_per_frame = freq as f64 / fps;
     let cpf = count_per_frame.round() as i64;

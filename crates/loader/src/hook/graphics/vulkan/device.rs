@@ -16,14 +16,14 @@ use vulkanalia::{
     },
 };
 
-use crate::hooks::graphics::vulkan::{
+use crate::hook::graphics::vulkan::{
     ENTRY,
-    instances::{
+    instance::{
         INSTANCES,
         PHYSICAL_DEVICES,
     },
-    preseting,
-    swapchains,
+    present,
+    swap_chain,
 };
 
 pub(super) static DEVICES: LazyLock<DashMap<vk::Device, DeviceState>> = LazyLock::new(DashMap::new);
@@ -102,7 +102,7 @@ impl DeviceState {
             })?
         };
         let hook_vkQueuePresentKHR = unsafe {
-            GenericDetour::new(pfn_vkQueuePresentKHR, preseting::my_vkQueuePresentKHR).and_then(
+            GenericDetour::new(pfn_vkQueuePresentKHR, present::my_vkQueuePresentKHR).and_then(
                 |h| {
                     h.enable()?;
                     Ok(h)
@@ -112,7 +112,7 @@ impl DeviceState {
         let hook_vkCreateSwapchainKHR = unsafe {
             GenericDetour::new(
                 pfn_vkCreateSwapchainKHR,
-                swapchains::my_vkCreateSwapchainKHR,
+                swap_chain::my_vkCreateSwapchainKHR,
             )
             .and_then(|h| {
                 h.enable()?;
@@ -122,7 +122,7 @@ impl DeviceState {
         let hook_vkDestroySwapchainKHR = unsafe {
             GenericDetour::new(
                 pfn_vkDestroySwapchainKHR,
-                swapchains::my_vkDestroySwapchainKHR,
+                swap_chain::my_vkDestroySwapchainKHR,
             )
             .and_then(|h| {
                 h.enable()?;

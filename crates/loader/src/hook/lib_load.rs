@@ -20,7 +20,7 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::hooks::graphics;
+use crate::hook::graphics;
 
 #[recordin_macro::static_hook]
 #[allow(dead_code)]

@@ -1,6 +1,6 @@
 mod entry;
-mod envs;
-mod hooks;
+mod env;
+mod hook;
 mod inject;
 
 pub const MAX_PATH_W: u32 = 32767;

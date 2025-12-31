@@ -8,20 +8,20 @@ use windows::Win32::{
 };
 use windows_core::implement;
 
-use crate::hooks::sound::wasapi::device::MyDevice;
+use crate::hook::sound::wasapi::device::MyDevice;
 
 #[implement(IMMDeviceCollection)]
-pub(in crate::hooks::sound) struct MyDeviceCollection {
-    pub(in crate::hooks::sound) device: Option<IMMDevice>,
+pub(in crate::hook::sound) struct MyDeviceCollection {
+    pub(in crate::hook::sound) device: Option<IMMDevice>,
 }
 
 impl MyDeviceCollection {
-    pub(in crate::hooks::sound) fn unique() -> Self {
+    pub(in crate::hook::sound) fn unique() -> Self {
         let device = Some(MyDevice::new().into());
         Self { device }
     }
 
-    pub(in crate::hooks::sound) fn empty() -> Self {
+    pub(in crate::hook::sound) fn empty() -> Self {
         let device = None;
         Self { device }
     }

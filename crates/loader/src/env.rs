@@ -1,18 +1,21 @@
 use std::{
+    cell::Cell,
     collections::BTreeMap,
     convert::Into,
     ffi::OsString,
     os::windows::ffi::OsStringExt,
     path::PathBuf,
+    str::FromStr,
     string::ToString,
     sync::LazyLock,
 };
 
+use arrayvec::ArrayString;
 use recordin_common::{
     ENV_KEY_AGGRESSIVE,
     ENV_KEY_ALLOC_CONSOLE,
     ENV_KEY_AUDIO_OUTPUT,
-    ENV_KEY_FORCE_TICK_THRES,
+    ENV_KEY_FORCE_TICK_THRESHOLD,
     ENV_KEY_FPS_F64_HEX,
     ENV_KEY_GRAPHICS_SYSTEM,
     ENV_KEY_IS_CLI,
@@ -30,18 +33,13 @@ use regex::{
 use windows_sys::Win32::System::Environment::GetCommandLineW;
 
 pub static FORCE_TICK_THRESHOLD: LazyLock<Option<u64>> = LazyLock::new(|| {
-    let a = std::env::var_os(ENV_KEY_FORCE_TICK_THRES)?;
+    let a = std::env::var_os(ENV_KEY_FORCE_TICK_THRESHOLD)?;
     u64::from_str_radix(&a.to_string_lossy(), 16).ok()
 });
 
 pub static GRAPHICS_SYSTEM: LazyLock<Option<String>> = LazyLock::new(|| {
     let e = std::env::var_os(ENV_KEY_GRAPHICS_SYSTEM)?;
     Some(e.to_string_lossy().to_string().to_lowercase())
-});
-
-pub static VIDEO_ENCODER: LazyLock<Option<String>> = LazyLock::new(|| {
-    let a = std::env::var_os(ENV_KEY_VIDEO_ENCODER)?;
-    Some(a.to_string_lossy().to_string())
 });
 
 pub static VIDEO_ARGS: LazyLock<Option<BTreeMap<String, String>>> = LazyLock::new(|| {
@@ -71,19 +69,8 @@ pub static AUDIO_OUTPUT: LazyLock<Option<String>> = LazyLock::new(|| {
     Some(e.to_string_lossy().to_string().replace("{p}", &this_exe()))
 });
 
-pub static FPS: LazyLock<Option<f64>> = LazyLock::new(|| {
-    let fps_str = std::env::var(ENV_KEY_FPS_F64_HEX)
-        .inspect_err(|e| log::warn!("unable to determine FPS: {e}"))
-        .ok()?;
-    u64::from_str_radix(&fps_str, 16)
-        .inspect_err(|e| log::warn!("unable to determine FPS: {e}"))
-        .map(f64::from_bits)
-        .inspect(|fps| log::info!("Desired FPS: {fps}"))
-        .ok()
-});
-
 pub fn should_emit_video() -> bool {
-    VIDEO_ENCODER.is_some() && FPS.is_some()
+    VIDEO_ENCODER.get().is_some() && FPS.get().is_some()
 }
 
 pub static CMDLINE: LazyLock<OsString> = LazyLock::new(|| {
@@ -123,9 +110,31 @@ pub static LOG_DIR: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 pub static ALLOC_CONSOLE: LazyLock<bool> =
     LazyLock::new(|| std::env::var_os(ENV_KEY_ALLOC_CONSOLE).is_some());
 
-pub fn this_exe() -> String {
-    let cmd = CMDLINE.to_string_lossy();
-    let argv = winsplit::split(&cmd);
-    let path = PathBuf::from(&argv[0]);
-    path.file_name().unwrap().to_string_lossy().to_string()
+std::thread_local! {
+    pub static VIDEO_ENCODER: Cell<Option<ArrayString<256>>> = {
+        let a = std::env::var_os(ENV_KEY_VIDEO_ENCODER)
+            .map(|a| ArrayString::from_str(&a.to_string_lossy()).unwrap());
+        Cell::new(a)
+    };
+
+    pub static FPS: Cell<Option<f64>> = {
+        let fps = std::env::var(ENV_KEY_FPS_F64_HEX)
+            .ok()
+            .and_then(|s| {
+                u64::from_str_radix(&s, 16).map(f64::from_bits).ok()
+            });
+        Cell::new(fps)
+    };
+
+    pub static EXECUTABLE: Cell<ArrayString<256>> = {
+        let cmd = CMDLINE.to_string_lossy();
+        let argv = winsplit::split(&cmd);
+        let path = PathBuf::from(&argv[0]);
+        let a = ArrayString::from_str(&path.file_name().unwrap().to_string_lossy()).unwrap();
+        Cell::new(a)
+    };
+}
+
+pub fn this_exe() -> ArrayString<256> {
+    EXECUTABLE.get()
 }

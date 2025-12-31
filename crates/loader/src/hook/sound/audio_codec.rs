@@ -24,7 +24,7 @@ use scuffle_ffmpeg::{
     resampler::Resampler,
 };
 
-use crate::envs;
+use crate::env;
 
 pub(super) static STREAM_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -36,7 +36,7 @@ pub(super) fn create_encoder(stream_number: u32) -> Option<AudioEncDuplex> {
     for _ in 0..10 {
         tx2.try_send(Vec::new()).ok();
     }
-    let filename = envs::AUDIO_OUTPUT
+    let filename = env::AUDIO_OUTPUT
         .as_ref()?
         .replace("{n}", &stream_number.to_string());
     std::thread::spawn(move || match loop_encode(rx1, tx2, filename) {

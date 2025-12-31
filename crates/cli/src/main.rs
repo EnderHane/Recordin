@@ -10,7 +10,7 @@ use libloading::{
 use recordin_common::{
     ENV_KEY_AGGRESSIVE,
     ENV_KEY_AUDIO_OUTPUT,
-    ENV_KEY_FORCE_TICK_THRES,
+    ENV_KEY_FORCE_TICK_THRESHOLD,
     ENV_KEY_FPS_F64_HEX,
     ENV_KEY_GRAPHICS_SYSTEM,
     ENV_KEY_IS_CLI,
@@ -80,7 +80,7 @@ fn main() -> color_eyre::Result<()> {
     }
     if let Some(v) = cli.force_tick_threshold {
         unsafe {
-            std::env::set_var(ENV_KEY_FORCE_TICK_THRES, format!("{v:X}"));
+            std::env::set_var(ENV_KEY_FORCE_TICK_THRESHOLD, format!("{v:X}"));
         }
     }
     if cli.vulkan {
@@ -93,10 +93,9 @@ fn main() -> color_eyre::Result<()> {
             std::env::set_var(ENV_KEY_SOUND_SYSTEM, "WASAPI");
         }
     }
-    let mut ch = Command::new(&cli.executable)
+    Command::new(&cli.executable)
         .args(&cli.exec_args)
         .env_remove(ENV_KEY_IS_CLI)
         .spawn()?;
-    ch.wait()?;
     Ok(())
 }

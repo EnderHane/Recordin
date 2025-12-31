@@ -107,6 +107,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrayvec"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -819,6 +825,7 @@ name = "recordin-loader"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arrayvec",
  "dashmap",
  "expanding_slice_rb",
  "flexi_logger",
@@ -1136,18 +1143,18 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vulkanalia"
-version = "0.33.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8131e26cc094996df8038e801724438c09874b1bc420644ef3a02bf96de911ed"
+checksum = "75351a0781724c33312f995ca539918cd727d5aab02852f6288da118aaace822"
 dependencies = [
  "vulkanalia-sys",
 ]
 
 [[package]]
 name = "vulkanalia-sys"
-version = "0.33.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93c2f4617999abdf24672d7a5a54e800f4b2c6fe2fe6744411026aefa4116859"
+checksum = "4e09d7a84fabf69939d58b472eac8dfff624b8ce408c82de0f9fa60be401930e"
 dependencies = [
  "bitflags 1.3.2",
 ]

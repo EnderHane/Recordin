@@ -50,17 +50,17 @@ use windows_core::{
 };
 use windows_result::HRESULT;
 
-use crate::hooks::{
+use crate::hook::{
     sound,
     sound::{
         EVENTS,
         wasapi::audio_render_client::MyAudioRenderClient,
     },
-    times,
+    timing,
 };
 
 #[implement(IAudioClient)]
-pub(in crate::hooks::sound) struct MyAudioClient {
+pub(in crate::hook::sound) struct MyAudioClient {
     init: OnceLock<InitializedState>,
     wave_format: WAVEFORMATEXTENSIBLE,
 }
@@ -78,7 +78,7 @@ struct StartState {
 
 impl MyAudioClient {
     const SAMPLE_RATE: u32 = 48000;
-    pub(in crate::hooks::sound) const CHANNELS: u32 = 2;
+    pub(in crate::hook::sound) const CHANNELS: u32 = 2;
     const SIZE_OF_SAMPLE: u32 = size_of::<f32>() as u32;
 
     pub fn new() -> Self {
@@ -175,7 +175,7 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
         let start_guard = init.start.lock();
         let count = init.frame_counter.load(Ordering::Acquire);
         let pad = if let Some(start) = start_guard.as_ref() {
-            let (pc, f) = times::get_perf();
+            let (pc, f) = timing::perf();
             let dt = pc - start.time;
             let dur_fr = dt as f64 * MyAudioClient::SAMPLE_RATE as f64 / f as f64;
             count as i64 - dur_fr.round() as i64
@@ -251,7 +251,7 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
         if let Some(eh) = &init.event_handle {
             eh.get().ok_or(AUDCLNT_E_EVENTHANDLE_NOT_SET)?;
         }
-        let (time, _) = times::get_perf();
+        let (time, _) = timing::perf();
         let start = StartState { time };
         start_guard.replace(start);
         Ok(())
@@ -264,7 +264,6 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
             "Buffer count: {}",
             init.frame_counter.load(Ordering::Relaxed)
         );
-        log::trace!("Tick: {}", times::TICK.load(Ordering::Relaxed));
         init.start.lock().take().ok_or(S_FALSE)?;
         Ok(())
     }

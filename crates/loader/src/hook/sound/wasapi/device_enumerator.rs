@@ -23,16 +23,16 @@ use windows_strings::{
     w,
 };
 
-use crate::hooks::sound::wasapi::{
+use crate::hook::sound::wasapi::{
     device::MyDevice,
     device_collection::MyDeviceCollection,
 };
 
 #[implement(IMMDeviceEnumerator)]
-pub(in crate::hooks::sound) struct MyDeviceEnumerator;
+pub(in crate::hook::sound) struct MyDeviceEnumerator;
 
 impl MyDeviceEnumerator {
-    pub(in crate::hooks::sound) fn new() -> Self {
+    pub(in crate::hook::sound) fn new() -> Self {
         Self
     }
 }

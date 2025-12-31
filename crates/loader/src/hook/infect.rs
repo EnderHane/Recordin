@@ -16,7 +16,7 @@ use windows_sys::Win32::{
 };
 
 use crate::{
-    envs::TARGET_REGEX,
+    env::TARGET_REGEX,
     inject,
 };
 
