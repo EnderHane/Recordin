@@ -8,3 +8,6 @@ lto = "fat"
 strip = true
 codegen-units = 1
 panic = "abort"
+
+[patch."https://github.com/ScuffleCloud/scuffle.git"]
+scuffle-ffmpeg = { git = "https://github.com/EnderHane/scuffle.git" }

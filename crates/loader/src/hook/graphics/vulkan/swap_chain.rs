@@ -18,23 +18,25 @@ use vulkanalia::{
     },
 };
 
-use crate::hook::{
-    graphics,
-    graphics::{
-        video_codec,
-        video_codec::{
-            EncDuplex,
-            SURFACE_COUNTER,
-        },
-        vulkan::{
+use crate::{
+    hook::{
+        graphics,
+        graphics::vulkan::{
             device::DEVICES,
             instance::{
                 INSTANCES,
                 PHYSICAL_DEVICES,
             },
         },
+        timing,
     },
-    timing,
+    output::{
+        video_codec,
+        video_codec::{
+            EncDuplex,
+            SURFACE_COUNTER,
+        },
+    },
 };
 
 #[allow(dead_code, non_snake_case)]

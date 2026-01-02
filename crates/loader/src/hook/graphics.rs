@@ -7,7 +7,6 @@ use std::{
 
 use crate::env;
 
-mod video_codec;
 mod vulkan;
 
 pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyhow::Result<()>> {

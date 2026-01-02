@@ -26,11 +26,11 @@ use scuffle_ffmpeg::{
 
 use crate::env;
 
-pub(super) static STREAM_COUNTER: AtomicU32 = AtomicU32::new(0);
+pub(crate) static STREAM_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-pub(super) type AudioEncDuplex = (kanal::Sender<Vec<u8>>, kanal::Receiver<Vec<u8>>);
+pub(crate) type AudioEncDuplex = (kanal::Sender<Vec<u8>>, kanal::Receiver<Vec<u8>>);
 
-pub(super) fn create_encoder(stream_number: u32) -> Option<AudioEncDuplex> {
+pub(crate) fn create_encoder(stream_number: u32) -> Option<AudioEncDuplex> {
     let (tx1, rx1) = kanal::bounded(30);
     let (tx2, rx2) = kanal::bounded(30);
     for _ in 0..10 {
@@ -66,7 +66,7 @@ fn loop_encode(
             let writer = File::create(&filename)?;
             let output = Output::new(
                 writer,
-                OutputOptions::builder().format_name("flac")?.build(),
+                OutputOptions::builder().format_name("Matroska")?.build(),
             )?;
             anyhow::Ok(output)
         })?;

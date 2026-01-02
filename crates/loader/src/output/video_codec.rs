@@ -24,11 +24,11 @@ use scuffle_ffmpeg::{
 
 use crate::env;
 
-pub(super) static SURFACE_COUNTER: AtomicU32 = AtomicU32::new(0);
+pub(crate) static SURFACE_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-pub(super) type EncDuplex = (kanal::Sender<Vec<[u8; 3]>>, kanal::Receiver<Vec<[u8; 3]>>);
+pub(crate) type EncDuplex = (kanal::Sender<Vec<[u8; 3]>>, kanal::Receiver<Vec<[u8; 3]>>);
 
-pub(super) fn create_encoder(stream_number: u32, width: usize, height: usize) -> Option<EncDuplex> {
+pub(crate) fn create_encoder(stream_number: u32, width: usize, height: usize) -> Option<EncDuplex> {
     env::should_emit_video().then_some({})?;
     let (tx1, rx1) = kanal::bounded(30);
     let (tx2, rx2) = kanal::bounded(30);

@@ -15,7 +15,6 @@ use windows_sys::Win32::{
 
 use crate::env;
 
-mod audio_codec;
 mod wasapi;
 
 const HNS_PER_SECOND: i64 = 10_000_000;

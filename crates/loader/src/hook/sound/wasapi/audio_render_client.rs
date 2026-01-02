@@ -20,10 +20,12 @@ use windows::Win32::{
 };
 use windows_core::implement;
 
-use crate::hook::sound::{
-    audio_codec,
-    audio_codec::AudioEncDuplex,
-    wasapi::audio_client::MyAudioClient,
+use crate::{
+    hook::sound::wasapi::audio_client::MyAudioClient,
+    output::{
+        audio_codec,
+        audio_codec::AudioEncDuplex,
+    },
 };
 
 #[implement(IAudioRenderClient)]
