@@ -50,7 +50,6 @@ impl IMMDevice_Impl for MyDevice_Impl {
         _activation_params: *const PROPVARIANT,
         out_interface: *mut *mut std::ffi::c_void,
     ) -> windows_result::Result<()> {
-        log::trace!("MyDevice Activate");
         unsafe {
             let iid = *iid;
             match iid {
@@ -60,7 +59,10 @@ impl IMMDevice_Impl for MyDevice_Impl {
                     *out_interface = audio_client.into_raw();
                     Ok(())
                 }
-                _ => Err(E_NOINTERFACE)?,
+                _ => {
+                    log::trace!("MyDevice Activate {iid:?}");
+                    Err(E_NOINTERFACE)?
+                }
             }
         }
     }

@@ -52,10 +52,7 @@ use windows_result::HRESULT;
 
 use crate::hook::{
     sound,
-    sound::{
-        EVENTS,
-        wasapi::audio_render_client::MyAudioRenderClient,
-    },
+    sound::wasapi::audio_render_client::MyAudioRenderClient,
     timing,
 };
 
@@ -67,7 +64,7 @@ pub(in crate::hook::sound) struct MyAudioClient {
 
 struct InitializedState {
     buffer_size: usize,
-    event_handle: Option<OnceLock<Arc<usize>>>,
+    event_handle: Option<OnceLock<usize>>,
     frame_counter: Arc<AtomicU64>,
     start: Mutex<Option<StartState>>,
 }
@@ -163,9 +160,7 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
 
     fn GetStreamLatency(&self) -> windows_result::Result<i64> {
         log::trace!("MyAudioClient GetStreamLatency");
-        if self.init.get().is_none() {
-            Err(AUDCLNT_E_NOT_INITIALIZED)?
-        }
+        self.init.get().ok_or(AUDCLNT_E_NOT_INITIALIZED)?;
         Ok(0)
     }
 
@@ -173,14 +168,14 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
         // log::trace!("MyAudioClient GetCurrentPadding");
         let init = self.init.get().ok_or(AUDCLNT_E_NOT_INITIALIZED)?;
         let start_guard = init.start.lock();
-        let count = init.frame_counter.load(Ordering::Acquire);
+        let count = init.frame_counter.load(Ordering::Relaxed);
         let pad = if let Some(start) = start_guard.as_ref() {
             let (pc, f) = timing::perf();
             let dt = pc - start.time;
-            let dur_fr = dt as f64 * MyAudioClient::SAMPLE_RATE as f64 / f as f64;
-            count as i64 - dur_fr.round() as i64
+            let dur_fr = dt * MyAudioClient::SAMPLE_RATE as i64 / f;
+            count as i64 - dur_fr
         } else {
-            init.buffer_size as _
+            count as i64
         };
         Ok(pad.clamp(0, init.buffer_size as _) as _)
     }
@@ -277,8 +272,7 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
     fn SetEventHandle(&self, event_handle: HANDLE) -> windows_result::Result<()> {
         log::trace!("MyAudioClient SetEventHandle");
         let init = self.init.get().ok_or(AUDCLNT_E_NOT_INITIALIZED)?;
-        let e = Arc::new(event_handle.0 as _);
-        EVENTS.lock().push(Arc::downgrade(&e));
+        let e = event_handle.0 as usize;
         init.event_handle
             .as_ref()
             .ok_or(AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED)?
@@ -292,7 +286,6 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
         iid: *const GUID,
         out_v: *mut *mut std::ffi::c_void,
     ) -> windows_result::Result<()> {
-        log::trace!("MyAudioClient GetService");
         let init = self.init.get().ok_or(AUDCLNT_E_NOT_INITIALIZED)?;
         if iid.is_null() || out_v.is_null() {
             Err(E_POINTER)?
@@ -301,14 +294,24 @@ impl IAudioClient_Impl for MyAudioClient_Impl {
         match iid {
             IAudioRenderClient::IID => {
                 log::trace!("MyAudioClient GetService IAudioRenderClient");
-                let a: IAudioRenderClient =
-                    MyAudioRenderClient::new(init.buffer_size, init.frame_counter.clone()).into();
+                let a: IAudioRenderClient = MyAudioRenderClient::new(
+                    init.buffer_size,
+                    init.frame_counter.clone(),
+                    init.event_handle.as_ref().map(|i| *i.wait()),
+                )
+                .into();
+                while !timing::ENABLED.load(Ordering::Acquire) {
+                    core::hint::spin_loop();
+                }
                 unsafe {
                     *out_v = a.into_raw();
                 }
                 Ok(())
             }
-            _ => Err(E_NOINTERFACE)?,
+            _ => {
+                log::trace!("MyAudioClient GetService {iid:?}");
+                Err(E_NOINTERFACE)?
+            }
         }
     }
 }

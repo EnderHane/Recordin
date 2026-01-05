@@ -10,24 +10,19 @@ use crate::env;
 mod vulkan;
 
 pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyhow::Result<()>> {
-    if env::FPS.get().is_some() {
-        #[allow(clippy::single_match)]
-        match env::GRAPHICS_SYSTEM.as_deref() {
-            Some("vulkan") => {
-                vulkan::lib_load_hook(filename, h_module)?;
-            }
-            _ => {}
-        }
+    match env::GRAPHICS_SYSTEM.as_deref() {
+        Some("vulkan") => vulkan::lib_load_hook(filename, h_module)?,
+        Some("d3d11") => unimplemented!(),
+        _ => {}
     }
     ControlFlow::Continue(())
 }
 
 pub(super) fn init_early_loaded() -> Option<anyhow::Result<usize>> {
-    env::FPS.get()?;
     match env::GRAPHICS_SYSTEM.as_deref()? {
-        "vulkan" => Some(vulkan::init_early_loaded()),
-        "d3d12" => unimplemented!(),
-        _ => None,
+        "vulkan" => Some(vulkan::init_early_loaded()?),
+        "d3d11" => unimplemented!(),
+        _ => None?,
     }
 }
 

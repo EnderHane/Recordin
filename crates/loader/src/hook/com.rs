@@ -1,5 +1,6 @@
 use std::ops::ControlFlow;
 
+use windows_core::GUID;
 use windows_sys::Win32::System::Com::CoCreateInstance;
 
 use crate::hook::sound;
@@ -19,6 +20,13 @@ pub(super) unsafe extern "system" fn CoCreateInstance(
     };
     if let ControlFlow::Break(hr) = chain() {
         return hr;
+    }
+    unsafe {
+        let cls = *cls_id;
+        let cls = GUID::from_values(cls.data1, cls.data2, cls.data3, cls.data4);
+        let intf = *iid;
+        let intf = GUID::from_values(intf.data1, intf.data2, intf.data3, intf.data4);
+        log::trace!("CoCreateInstance {:?} {:?}", cls, intf);
     }
     unsafe { orig_CoCreateInstance(cls_id, outer, cls_context, iid, out_v) }
 }

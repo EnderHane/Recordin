@@ -1,3 +1,5 @@
+extern crate alloc;
+
 mod entry;
 mod env;
 mod hook;

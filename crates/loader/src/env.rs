@@ -2,8 +2,6 @@ use std::{
     cell::Cell,
     collections::BTreeMap,
     convert::Into,
-    ffi::OsString,
-    os::windows::ffi::OsStringExt,
     path::PathBuf,
     str::FromStr,
     string::ToString,
@@ -30,7 +28,6 @@ use regex::{
     Regex,
     RegexBuilder,
 };
-use windows_sys::Win32::System::Environment::GetCommandLineW;
 
 pub static FORCE_TICK_THRESHOLD: LazyLock<Option<u64>> = LazyLock::new(|| {
     let a = std::env::var_os(ENV_KEY_FORCE_TICK_THRESHOLD)?;
@@ -59,24 +56,24 @@ pub static SOUND_SYSTEM: LazyLock<Option<String>> = LazyLock::new(|| {
     Some(e.to_string_lossy().to_string().to_lowercase())
 });
 
-pub static VIDEO_OUTPUT: LazyLock<Option<String>> = LazyLock::new(|| {
+pub static VIDEO_OUTPUT: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
     let e = std::env::var_os(ENV_KEY_VIDEO_OUTPUT)?;
-    Some(e.to_string_lossy().to_string().replace("{p}", &this_exe()))
+    Some(PathBuf::from(e))
 });
 
-pub static AUDIO_OUTPUT: LazyLock<Option<String>> = LazyLock::new(|| {
+pub static AUDIO_OUTPUT: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
     let e = std::env::var_os(ENV_KEY_AUDIO_OUTPUT)?;
-    Some(e.to_string_lossy().to_string().replace("{p}", &this_exe()))
+    Some(PathBuf::from(e))
 });
 
 pub fn should_emit_video() -> bool {
-    VIDEO_ENCODER.get().is_some() && FPS.get().is_some()
+    VIDEO_ENCODER.get().is_some()
 }
 
-pub static CMDLINE: LazyLock<OsString> = LazyLock::new(|| {
-    let p_cmdline = unsafe { GetCommandLineW() };
-    unsafe { OsString::from_wide(windows_strings::PCWSTR::from_raw(p_cmdline).as_wide()) }
-});
+// pub static CMDLINE: LazyLock<OsString> = LazyLock::new(|| {
+//     let p_cmdline = unsafe { GetCommandLineW() };
+//     unsafe { OsString::from_wide(windows_strings::PCWSTR::from_raw(p_cmdline).as_wide()) }
+// });
 
 pub static TARGET_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| {
     let re = std::env::var(ENV_KEY_TARGET_REGEX)
@@ -117,24 +114,24 @@ std::thread_local! {
         Cell::new(a)
     };
 
-    pub static FPS: Cell<Option<f64>> = {
+    pub static FPS: Cell<f64> = {
         let fps = std::env::var(ENV_KEY_FPS_F64_HEX)
             .ok()
             .and_then(|s| {
                 u64::from_str_radix(&s, 16).map(f64::from_bits).ok()
             });
-        Cell::new(fps)
+        Cell::new(fps.unwrap_or(60.))
     };
 
-    pub static EXECUTABLE: Cell<ArrayString<256>> = {
-        let cmd = CMDLINE.to_string_lossy();
-        let argv = winsplit::split(&cmd);
-        let path = PathBuf::from(&argv[0]);
-        let a = ArrayString::from_str(&path.file_name().unwrap().to_string_lossy()).unwrap();
-        Cell::new(a)
-    };
+    // pub static EXECUTABLE: Cell<ArrayString<256>> = {
+    //     let cmd = CMDLINE.to_string_lossy();
+    //     let argv = winsplit::split(&cmd);
+    //     let path = PathBuf::from(&argv[0]);
+    //     let a = ArrayString::from_str(&path.file_name().unwrap().to_string_lossy()).unwrap();
+    //     Cell::new(a)
+    // };
 }
 
-pub fn this_exe() -> ArrayString<256> {
-    EXECUTABLE.get()
-}
+// pub fn this_exe() -> ArrayString<256> {
+//     EXECUTABLE.get()
+// }

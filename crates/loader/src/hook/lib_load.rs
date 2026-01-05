@@ -20,7 +20,10 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::hook::graphics;
+use crate::hook::{
+    graphics,
+    sound,
+};
 
 #[recordin_macro::static_hook]
 #[allow(dead_code)]
@@ -89,15 +92,16 @@ fn on_load_library(filename: &str, module: HMODULE) {
     if module.is_null() {
         return;
     }
-    let h_module = module as usize;
+    let h_module = module.addr();
     if HOOKED.contains(&h_module) {
         return;
     }
     let chain = || {
         graphics::lib_load_hook(filename, h_module)?;
+        sound::lib_load_hook(filename, h_module)?;
         ControlFlow::Continue(())
     };
-    if let ControlFlow::Break(Ok(_)) = chain() {
+    if chain().is_break() {
         HOOKED.insert(h_module);
     }
 }
@@ -110,12 +114,15 @@ pub(super) fn init() -> anyhow::Result<()> {
         init_LoadLibraryExW(LoadLibraryExW)?.enable()?;
         init_FreeLibrary(FreeLibrary)?.enable()?;
     }
-    init_early_loaded().ok();
+    init_early_loaded()?;
     Ok(())
 }
 
 fn init_early_loaded() -> anyhow::Result<()> {
     if let Some(a) = graphics::init_early_loaded() {
+        HOOKED.insert(a?);
+    }
+    if let Some(a) = sound::init_early_loaded() {
         HOOKED.insert(a?);
     }
     Ok(())

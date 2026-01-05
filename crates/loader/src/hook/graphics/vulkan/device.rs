@@ -16,14 +16,17 @@ use vulkanalia::{
     },
 };
 
-use crate::hook::graphics::vulkan::{
-    ENTRY,
-    instance::{
-        INSTANCES,
-        PHYSICAL_DEVICES,
+use crate::hook::{
+    graphics::vulkan::{
+        ENTRY,
+        instance::{
+            INSTANCES,
+            PHYSICAL_DEVICES,
+        },
+        present,
+        swap_chain,
     },
-    present,
-    swap_chain,
+    timing,
 };
 
 pub(super) static DEVICES: LazyLock<DashMap<vk::Device, DeviceState>> = LazyLock::new(DashMap::new);
@@ -175,5 +178,8 @@ unsafe extern "system" fn my_vkDestroyDevice(
     let (_, dev_state) = DEVICES.remove(&device).expect("device not found");
     unsafe {
         dev_state.vkDestroyDevice()(device, allocator);
+    }
+    if DEVICES.is_empty() {
+        timing::pause();
     }
 }

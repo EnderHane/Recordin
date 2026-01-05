@@ -1,10 +1,7 @@
 use std::ops::ControlFlow;
 
 use device_enumerator::MyDeviceEnumerator;
-use windows::Win32::Media::Audio::{
-    IMMDeviceEnumerator,
-    MMDeviceEnumerator,
-};
+use windows::Win32::Media::Audio::IMMDeviceEnumerator;
 use windows_core::{
     GUID,
     Interface,
@@ -18,7 +15,7 @@ mod device_collection;
 mod device_enumerator;
 mod property_store;
 
-pub fn wasapi_hook(
+pub fn com_hook(
     cls_id: *const windows_sys::core::GUID,
     _outer: *mut core::ffi::c_void,
     _cls_context: windows_sys::Win32::System::Com::CLSCTX,
@@ -27,10 +24,10 @@ pub fn wasapi_hook(
 ) -> ControlFlow<windows_sys::core::HRESULT> {
     unsafe {
         let cls = *cls_id;
-        let cls = GUID::from_values(cls.data1, cls.data2, cls.data3, cls.data4);
+        let _cls = GUID::from_values(cls.data1, cls.data2, cls.data3, cls.data4);
         let intf = *iid;
         let intf = GUID::from_values(intf.data1, intf.data2, intf.data3, intf.data4);
-        if cls == MMDeviceEnumerator && intf == IMMDeviceEnumerator::IID {
+        if intf == IMMDeviceEnumerator::IID {
             log::trace!("CoCreateInstance IMMDeviceEnumerator");
             let my: IMMDeviceEnumerator = MyDeviceEnumerator::new().into();
             *out_v = my.into_raw();

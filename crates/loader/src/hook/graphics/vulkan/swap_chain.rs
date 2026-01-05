@@ -32,10 +32,7 @@ use crate::{
     },
     output::{
         video_codec,
-        video_codec::{
-            EncDuplex,
-            SURFACE_COUNTER,
-        },
+        video_codec::EncDuplex,
     },
 };
 
@@ -89,9 +86,6 @@ pub(super) unsafe extern "system" fn my_vkDestroySwapchainKHR(
     let (t, f) = timing::real();
     let dT = (t - chain_st.init_real_time) as f64;
     log::debug!("Average FPS: {}", fr / dT * f as f64);
-    if SWAP_CHAINS.is_empty() {
-        timing::pause();
-    }
     unsafe {
         dev_st.free_command_buffers(dev_st.command_pool, &chain_st.command_buffer);
         dev_st.destroy_semaphore(chain_st.copy_semaphore, None);
@@ -184,8 +178,7 @@ impl SwapChainState {
                 vk::MemoryMapFlags::empty(),
             )?;
             let mapped = AtomicPtr::new(mapped);
-            let num = SURFACE_COUNTER.fetch_add(1, Ordering::Relaxed);
-            let encoder = video_codec::create_encoder(num, width as _, height as _);
+            let encoder = video_codec::create_encoder(width as _, height as _);
             Ok(Self {
                 swap_images,
                 copy_semaphore,

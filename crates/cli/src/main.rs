@@ -83,12 +83,19 @@ fn main() -> color_eyre::Result<()> {
             std::env::set_var(ENV_KEY_FORCE_TICK_THRESHOLD, format!("{v:X}"));
         }
     }
-    if cli.vulkan {
+    if cli.graphics.vulkan {
+        println!("Vulkan enabled");
         unsafe {
             std::env::set_var(ENV_KEY_GRAPHICS_SYSTEM, "Vulkan");
         }
+    } else if cli.graphics.d3d11 {
+        println!("D3D11 enabled");
+        unsafe {
+            std::env::set_var(ENV_KEY_GRAPHICS_SYSTEM, "D3D11");
+        }
     }
-    if cli.wasapi {
+    if cli.sound.wasapi {
+        println!("WASAPI enabled");
         unsafe {
             std::env::set_var(ENV_KEY_SOUND_SYSTEM, "WASAPI");
         }

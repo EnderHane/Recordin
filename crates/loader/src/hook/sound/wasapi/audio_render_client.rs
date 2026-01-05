@@ -19,6 +19,7 @@ use windows::Win32::{
     },
 };
 use windows_core::implement;
+use windows_sys::Win32::System::Threading::SetEvent;
 
 use crate::{
     hook::sound::wasapi::audio_client::MyAudioClient,
@@ -34,25 +35,25 @@ pub(super) struct MyAudioRenderClient {
     counter: Arc<AtomicU64>,
     requested: AtomicBool,
     frame_req: AtomicU64,
+    event: Option<usize>,
     encoder: Option<AudioEncDuplex>,
 }
 
 impl MyAudioRenderClient {
-    pub(super) fn new(buffer_size: usize, counter: Arc<AtomicU64>) -> Self {
+    pub(super) fn new(buffer_size: usize, counter: Arc<AtomicU64>, event: Option<usize>) -> Self {
         let buf = vec![0; buffer_size * 2 * 4].into_boxed_slice();
         let requested = AtomicBool::new(false);
         let frame_req = AtomicU64::new(0);
-        let num = audio_codec::STREAM_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let encoder = audio_codec::create_encoder(num);
+        let encoder = audio_codec::create_encoder();
         Self {
             buf,
             counter,
             requested,
             frame_req,
+            event,
             encoder,
         }
     }
-
     fn on_release(&self, len: usize, muted: bool) -> Option<()> {
         let (tx, rx) = self.encoder.as_ref()?;
         let mut buf = rx.recv().ok()?;
@@ -103,6 +104,11 @@ impl IAudioRenderClient_Impl for MyAudioRenderClient_Impl {
         self.counter.fetch_add(f, Ordering::Relaxed);
         self.frame_req.store(0, Ordering::Relaxed);
         self.requested.store(false, Ordering::Release);
+        if let Some(event) = self.event {
+            unsafe {
+                SetEvent(event as _);
+            }
+        }
         Ok(())
     }
 }
