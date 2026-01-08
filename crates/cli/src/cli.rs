@@ -7,10 +7,10 @@ pub struct Cli {
     pub graphics: Graphics,
     #[clap(flatten)]
     pub sound: Sound,
-    #[clap(alias = "ve", long, help = "Video encoder FFmpeg uses")]
+    #[clap(alias = "venc", long, help = "Video encoder FFmpeg uses")]
     pub video_encoder: Option<String>,
-    #[clap(alias = "vo", long, help = "Video encoder options")]
-    pub video_args: Option<String>,
+    #[clap(alias = "vopt", long, help = "Video encoder options")]
+    pub video_option: Option<String>,
     #[clap(short = 'v', long, help = "Path of video output file")]
     pub video_output: Option<String>,
     #[clap(short = 'a', long, help = "Path of audio output file")]

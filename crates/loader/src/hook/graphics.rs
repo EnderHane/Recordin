@@ -7,12 +7,13 @@ use std::{
 
 use crate::env;
 
+mod dxgi;
 mod vulkan;
 
 pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyhow::Result<()>> {
     match env::GRAPHICS_SYSTEM.as_deref() {
         Some("vulkan") => vulkan::lib_load_hook(filename, h_module)?,
-        Some("d3d11") => unimplemented!(),
+        Some("d3d11") => dxgi::lib_load_hook(filename, h_module)?,
         _ => {}
     }
     ControlFlow::Continue(())
@@ -21,7 +22,7 @@ pub(super) fn lib_load_hook(filename: &str, h_module: usize) -> ControlFlow<anyh
 pub(super) fn init_early_loaded() -> Option<anyhow::Result<usize>> {
     match env::GRAPHICS_SYSTEM.as_deref()? {
         "vulkan" => Some(vulkan::init_early_loaded()?),
-        "d3d11" => unimplemented!(),
+        "d3d11" => Some(dxgi::init_early_loaded()?),
         _ => None?,
     }
 }

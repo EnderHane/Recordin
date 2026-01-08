@@ -25,9 +25,14 @@ pub fn com_hook(
     unsafe {
         let cls = *cls_id;
         let _cls = GUID::from_values(cls.data1, cls.data2, cls.data3, cls.data4);
-        let intf = *iid;
-        let intf = GUID::from_values(intf.data1, intf.data2, intf.data3, intf.data4);
-        if intf == IMMDeviceEnumerator::IID {
+        let interface = *iid;
+        let interface = GUID::from_values(
+            interface.data1,
+            interface.data2,
+            interface.data3,
+            interface.data4,
+        );
+        if interface == IMMDeviceEnumerator::IID {
             log::trace!("CoCreateInstance IMMDeviceEnumerator");
             let my: IMMDeviceEnumerator = MyDeviceEnumerator::new().into();
             *out_v = my.into_raw();

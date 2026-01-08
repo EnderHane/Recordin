@@ -48,6 +48,9 @@ windows = { version = "0.62.2", features = [
     "Win32_System_Variant",
     "Win32_UI_Shell_PropertiesSystem",
     "Win32_Devices_FunctionDiscovery",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Direct3D11"
 ] }
 windows-core = "0.62.2"
 parking_lot = "0.12.5"
@@ -56,3 +59,4 @@ expanding_slice_rb = "0.2.2"
 widestring = "1.2.1"
 libloading = "0.9.0"
 arrayvec = "0.7.6"
+humantime = "2.3.0"

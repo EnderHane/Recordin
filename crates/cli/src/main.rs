@@ -65,7 +65,7 @@ fn main() -> color_eyre::Result<()> {
     if let Some(ffmpeg_encoder) = &cli.video_encoder {
         unsafe {
             std::env::set_var(ENV_KEY_VIDEO_ENCODER, ffmpeg_encoder);
-            if let Some(ffmpeg_args) = &cli.video_args {
+            if let Some(ffmpeg_args) = &cli.video_option {
                 std::env::set_var(ENV_KEY_VIDEO_ARGS, ffmpeg_args);
             }
             if let Some(ffmpeg_output) = &cli.video_output {

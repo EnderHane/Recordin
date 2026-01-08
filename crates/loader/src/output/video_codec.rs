@@ -58,7 +58,9 @@ pub(crate) fn create_encoder(width: usize, height: usize) -> Option<EncDuplex> {
             log::trace!("Video output: \n{:?}", path);
             Ok(File::create(path)?)
         }) {
-            Ok(_) => {}
+            Ok(_) => {
+                log::info!("Video encoder successfully completed");
+            }
             Err(e) => {
                 log::warn!("Video encoder error: {}", e);
             }
@@ -91,7 +93,7 @@ fn loop_encode(
     }
     let mut lazy_group = LazyCell::new(|| {
         let writer = lazy_file()?;
-        let mut output = Output::new(
+        let mut output = Output::seekable(
             writer,
             OutputOptions::builder().format_name("Matroska")?.build(),
         )?;

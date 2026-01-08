@@ -41,27 +41,24 @@ pub(super) unsafe extern "system" fn my_vkCreateSwapchainKHR(
     device: vk::Device,
     create_info: *const vk::SwapchainCreateInfoKHR,
     allocator: *const vk::AllocationCallbacks,
-    swapchain: *mut vk::SwapchainKHR,
+    swap_chain: *mut vk::SwapchainKHR,
 ) -> vk::Result {
     log::trace!("vkCreateSwapchainKHR");
     let dev_st = DEVICES.get(&device).expect("device not found");
-    let res = unsafe { dev_st.vkCreateSwapchainKHR()(device, create_info, allocator, swapchain) };
+    let res = unsafe { dev_st.vkCreateSwapchainKHR()(device, create_info, allocator, swap_chain) };
     if res != vk::Result::SUCCESS {
         return res;
     }
     unsafe {
         let info = *create_info;
-        let chain = *swapchain;
-        #[cfg(debug_assertions)]
-        {
-            log::debug!(
-                "Create VkSwapchainKHR@{chain:?} on VkDevice@{device:?}, \
+        let chain = *swap_chain;
+        log::debug!(
+            "Create VkSwapchainKHR@{chain:?} on VkDevice@{device:?}, \
                 format: {:?}, color space: {:?}, extent: {:?}",
-                info.image_format,
-                info.image_color_space,
-                info.image_extent,
-            );
-        };
+            info.image_format,
+            info.image_color_space,
+            info.image_extent,
+        );
         let chain_state = SwapChainState::new(device, info, chain).unwrap();
         SWAP_CHAINS.insert(chain, chain_state);
     }
@@ -78,7 +75,6 @@ pub(super) unsafe extern "system" fn my_vkDestroySwapchainKHR(
     allocator: *const vk::AllocationCallbacks,
 ) {
     log::trace!("vkDestroySwapchainKHR");
-    #[cfg(debug_assertions)]
     log::debug!("Destroy VkSwapchainKHR@{swap_chain:?} on VkDevice@{device:?}");
     let dev_st = DEVICES.get(&device).unwrap();
     let (_, chain_st) = SWAP_CHAINS.remove(&swap_chain).unwrap();

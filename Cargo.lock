@@ -480,6 +480,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33e677ccfd5f81f4f0584fc7e28566b7f7f081d76fdfba4200e7c197d3789ec1"
 
 [[package]]
+name = "humantime"
+version = "2.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "135b12329e5e3ce057a9f972339ea52bc954fe1e9358ef27f95e89716fbc5424"
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -824,6 +830,7 @@ dependencies = [
  "expanding_slice_rb",
  "flexi_logger",
  "hmod",
+ "humantime",
  "kanal",
  "libloading 0.9.0",
  "log",

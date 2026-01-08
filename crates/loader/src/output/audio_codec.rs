@@ -26,7 +26,6 @@ use scuffle_ffmpeg::{
     },
     rational::Rational,
     resampler::Resampler,
-
 };
 
 use crate::env;
@@ -60,7 +59,9 @@ pub(crate) fn create_encoder() -> Option<AudioEncDuplex> {
             log::trace!("Audio output: \n{:?}", path);
             Ok(File::create(path)?)
         }) {
-            Ok(_) => {}
+            Ok(_) => {
+                log::info!("Audio encoder successfully completed");
+            }
             Err(e) => {
                 log::warn!("Audio encoder error: {}", e);
             }
@@ -74,7 +75,7 @@ fn loop_encode(
     tx: kanal::Sender<Vec<u8>>,
     lazy_file: impl FnOnce() -> anyhow::Result<File> + 'static,
 ) -> anyhow::Result<()> {
-    log::trace!("Audio encoder: {}", "flac");
+    log::trace!("Audio encoder: {}", "wavpack");
     struct LazyGroup {
         output: Output<File>,
         encoder: Encoder,
@@ -83,27 +84,27 @@ fn loop_encode(
     }
     let mut lazy_group = LazyCell::new(|| {
         let writer = lazy_file()?;
-        let mut output = Output::new(
+        let mut output = Output::seekable(
             writer,
-            OutputOptions::builder().format_name("flac")?.build(),
+            OutputOptions::builder().format_name("Matroska")?.build(),
         )?;
-        let codec = EncoderCodec::by_name("flac").unwrap();
+        let codec = EncoderCodec::by_name("wavpack").unwrap();
         let audio_settings = AudioEncoderSettings::builder()
             .sample_rate(48000)
             .ch_layout(AudioChannelLayout::new(2).unwrap())
-            .sample_fmt(AVSampleFormat::S16)
+            .sample_fmt(AVSampleFormat::Fltp)
             .build();
         let encoder = Encoder::new(
             codec,
             &mut output,
             Rational::new(1, NonZero::new(48000).unwrap()),
-            Rational::new(1, NonZero::new(48000).unwrap()),
+            Rational::new(1, NonZero::new(1000).unwrap()),
             audio_settings,
         )?;
         output.write_header()?;
         let frame = AudioFrame::builder()
             .channel_layout(AudioChannelLayout::new(2).unwrap())
-            .nb_samples(4608)
+            .nb_samples(24000)
             .sample_fmt(AVSampleFormat::Flt)
             .sample_rate(48000)
             .build()?;
@@ -112,7 +113,7 @@ fn loop_encode(
             AVSampleFormat::Flt,
             48000,
             AudioChannelLayout::new(2).unwrap(),
-            AVSampleFormat::S16,
+            AVSampleFormat::Fltp,
             48000,
         )?;
         let lazy = LazyGroup {
@@ -124,7 +125,7 @@ fn loop_encode(
         anyhow::Ok(lazy)
     });
     let mut count = 0;
-    let mut ring = ExpSliceRB::with_capacity(NonZero::new(4608 * 4 * 2).unwrap());
+    let mut ring = ExpSliceRB::with_capacity(NonZero::new(24000 * 4 * 2).unwrap());
     while let Ok(buf) = rx.recv() {
         let LazyGroup {
             output: o,
@@ -134,13 +135,13 @@ fn loop_encode(
         } = lazy_group.as_mut().map_err(|e| anyhow::anyhow!("{e}"))?;
         ring.write(&buf);
         tx.send(buf).ok();
-        while ring.len() >= 4608 * 4 * 2 {
+        while ring.len() >= 24000 * 4 * 2 {
             let fr_data = fr.data_mut(0).unwrap();
-            ring.read_into(&mut fr_data[0..4608 * 4 * 2]);
-            let mut s16 = re.process(fr)?;
-            s16.set_pts(Some(count));
-            count += 4608;
-            e.send_frame(&s16)?;
+            ring.read_into(&mut fr_data[0..24000 * 4 * 2]);
+            let mut rsp = re.process(fr)?;
+            rsp.set_pts(count.into());
+            count += 24000;
+            e.send_frame(&rsp)?;
             while let Some(packet) = e.receive_packet()? {
                 o.write_interleaved_packet(packet)?;
             }
@@ -150,24 +151,29 @@ fn loop_encode(
         && let Ok(LazyGroup {
             output: o,
             encoder: e,
-            frame: fr,
+            frame: _,
             resampler: re,
         }) = lazy_group.as_mut()
     {
         let rest = ring.len();
+        let mut fr = AudioFrame::builder()
+            .nb_samples(rest as i32 / 4 / 2)
+            .channel_layout(AudioChannelLayout::new(2).unwrap())
+            .sample_fmt(AVSampleFormat::Flt)
+            .sample_rate(48000)
+            .build()?;
         let fr_data = fr.data_mut(0).unwrap();
         ring.read_into(&mut fr_data[0..rest]);
-        fr_data[rest..4608 * 4 * 2].fill(0);
-        let mut s16 = re.process(fr)?;
-        s16.set_pts(Some(count));
+        let mut rsp = re.process(&fr)?;
+        rsp.set_pts(count.into());
         count += rest as i64 / 4 / 2;
-        e.send_frame(&s16)?;
-        while let Some(packet) = e.receive_packet()? {
-            o.write_interleaved_packet(packet)?;
+        e.send_frame(&rsp)?;
+        while let Some(pk) = e.receive_packet()? {
+            o.write_interleaved_packet(pk)?;
         }
         e.send_eof()?;
-        while let Some(packet) = e.receive_packet()? {
-            o.write_interleaved_packet(packet)?;
+        while let Some(pk) = e.receive_packet()? {
+            o.write_interleaved_packet(pk)?;
         }
         o.write_trailer()?;
         log::trace!("Audio encoded samples {count}");
