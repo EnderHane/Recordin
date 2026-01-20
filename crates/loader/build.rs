@@ -9,5 +9,6 @@ fn main() {
     println!("cargo:rustc-link-lib=bcrypt");
     println!("cargo:rustc-link-lib=libx264");
     println!("cargo:rustc-link-lib=x265-static");
+    println!("cargo:rustc-link-lib=SvtAv1Enc");
     println!("cargo:rustc-link-lib=vpl");
 }

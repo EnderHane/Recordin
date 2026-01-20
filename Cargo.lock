@@ -806,7 +806,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "recordin-cli"
+name = "rec"
 version = "0.1.0"
 dependencies = [
  "clap",
@@ -817,11 +817,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "recordin-common"
-version = "0.1.0"
-
-[[package]]
-name = "recordin-loader"
+name = "recordin"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -850,6 +846,10 @@ dependencies = [
  "windows-sys 0.61.2",
  "winsplit",
 ]
+
+[[package]]
+name = "recordin-common"
+version = "0.1.0"
 
 [[package]]
 name = "recordin-macro"
