@@ -55,7 +55,7 @@ fn main() -> color_eyre::Result<()> {
     unsafe {
         std::env::set_var(ENV_KEY_FPS_F64_HEX, fps_str);
     }
-    let loader_module = unsafe { Library::new("recordin_loader") }?;
+    let loader_module = unsafe { Library::new("recordin") }?;
     let magic_symbol: Symbol<*const u64> = unsafe { loader_module.get("__MAGIC__") }?;
     assert_eq!(
         unsafe { **magic_symbol },

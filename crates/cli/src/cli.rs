@@ -15,8 +15,6 @@ pub struct Cli {
     pub video_output: Option<String>,
     #[clap(short = 'a', long, help = "Path of audio output file")]
     pub audio_output: Option<String>,
-    #[clap(short = 'A', long, help = "Merge audio to video")]
-    pub merge_audio: bool,
     #[clap(short = 'R', long, help = "")]
     pub target_regex: Option<String>,
     #[clap(short = 'I', long = "aggressive")]
