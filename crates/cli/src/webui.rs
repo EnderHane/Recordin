@@ -17,7 +17,18 @@ use crate::cli::{
 };
 
 pub fn serve_webui() -> color_eyre::Result<()> {
-    let listener = TcpListener::bind("127.0.0.3:43009")?;
+    let start_port = 43009;
+    let mut port = start_port;
+    let listener = loop {
+        if let Ok(l) = TcpListener::bind(format!("127.0.0.1:{}", port)) {
+            break l;
+        }
+        port += 1;
+        if port > start_port + 100 {
+            // Fallback to OS choice if range exhausted
+            break TcpListener::bind("127.0.0.1:0")?;
+        }
+    };
     let host = listener.local_addr()?.ip();
     let port = listener.local_addr()?.port();
     let url = format!("http://{}:{}", host, port);

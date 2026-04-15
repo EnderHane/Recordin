@@ -26,11 +26,9 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); display: flex; justify-content: center; padding: 40px; transition: background 0.3s; }
         .card { background: var(--card-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 600px; transition: background 0.3s; }
         h1 { margin-top: 0; color: var(--text-main); text-align: center; }
-        .form-group { margin-bottom: 1rem; display: flex; align-items: center; }
+        .form-group { margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
         .form-group label { flex: 0 0 180px; color: var(--text-muted); }
         .form-group input[type="text"], .form-group input[type="number"] { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--input-text); }
-        .checkbox-group { margin-bottom: 1rem; display: flex; gap: 20px; justify-content: center; }
-        .checkbox-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         .actions { display: flex; gap: 10px; justify-content: center; margin-top: 2rem; }
         button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         .btn-start { background: #28a745; color: white; }
@@ -39,6 +37,8 @@
         .btn-quit:hover { background: #c82333; }
         .theme-switch { position: fixed; top: 20px; left: 20px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-muted); user-select: none; }
         .theme-switch input { cursor: pointer; }
+        .history-container { display: flex; gap: 5px; align-items: center; flex: 1; }
+        .history-select { padding: 7px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--input-text); font-size: 0.8rem; max-width: 120px; }
     </style>
 </head>
 <body id="body">
@@ -49,18 +49,26 @@
     <div class="card">
         <h1>Recordin Controller</h1>
         <form id="config-form">
-
             <div class="form-group">
                 <label for="executable">Executable Path</label>
-                <input type="text" id="executable" name="executable" required>
+                <div class="history-container">
+                    <input type="text" id="executable" name="executable" required>
+                    <select class="history-select" data-field="executable"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="exec_args">Arguments</label>
-                <input type="text" id="exec_args" name="exec_args">
+                <div class="history-container">
+                    <input type="text" id="exec_args" name="exec_args">
+                    <select class="history-select" data-field="exec_args"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="fps">FPS</label>
-                <input type="number" id="fps" name="fps" step="0.1" value="60.0">
+                <div class="history-container">
+                    <input type="number" id="fps" name="fps" step="0.1" value="60.0">
+                    <select class="history-select" data-field="fps"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label>Graphics Hook</label>
@@ -90,28 +98,46 @@
             </div>
             <div class="form-group">
                 <label for="target_regex">Target Regex</label>
-                <input type="text" id="target_regex" name="target_regex">
+                <div class="history-container">
+                    <input type="text" id="target_regex" name="target_regex">
+                    <select class="history-select" data-field="target_regex"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="force_tick_threshold">Force Tick Threshold</label>
-                <input type="text" id="force_tick_threshold" name="force_tick_threshold">
+                <div class="history-container">
+                    <input type="text" id="force_tick_threshold" name="force_tick_threshold">
+                    <select class="history-select" data-field="force_tick_threshold"></select>
+                </div>
             </div>
             <hr>
             <div class="form-group">
                 <label for="video_encoder">Video Encoder</label>
-                <input type="text" id="video_encoder" name="video_encoder">
+                <div class="history-container">
+                    <input type="text" id="video_encoder" name="video_encoder">
+                    <select class="history-select" data-field="video_encoder"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="video_option">Video Options</label>
-                <input type="text" id="video_option" name="video_option">
+                <div class="history-container">
+                    <input type="text" id="video_option" name="video_option">
+                    <select class="history-select" data-field="video_option"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="video_output">Video Output</label>
-                <input type="text" id="video_output" name="video_output">
+                <div class="history-container">
+                    <input type="text" id="video_output" name="video_output">
+                    <select class="history-select" data-field="video_output"></select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="audio_output">Audio Output</label>
-                <input type="text" id="audio_output" name="audio_output">
+                <div class="history-container">
+                    <input type="text" id="audio_output" name="audio_output">
+                    <select class="history-select" data-field="audio_output"></select>
+                </div>
             </div>
             <div class="actions">
                 <button type="button" id="btn-start" class="btn-start">Start</button>
@@ -124,56 +150,109 @@
         const body = document.getElementById('body');
 
         function applyTheme(isDark) {
-            if (isDark) {
-                body.classList.add('dark-theme');
-            } else {
-                body.classList.remove('dark-theme');
-            }
+            if (isDark) { body.classList.add('dark-theme'); } else { body.classList.remove('dark-theme'); }
             themeToggle.checked = isDark;
         }
 
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         applyTheme(prefersDark);
+        themeToggle.addEventListener('change', () => applyTheme(themeToggle.checked));
 
-        themeToggle.addEventListener('change', () => {
-            applyTheme(themeToggle.checked);
+        // State restoration
+        const STATE_KEY = 'recorin_state';
+        async function saveState() {
+            await new Promise(r => setTimeout(r, 1));
+            const form = document.getElementById('config-form');
+            const formData = new FormData(form);
+            const state = {};
+            formData.forEach((value, key) => { state[key] = value; });
+            form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                state[cb.name] = cb.checked ? 'on' : '';
+            });
+            localStorage.setItem(STATE_KEY, JSON.stringify(state));
+        }
+
+        function loadState() {
+            const state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+            Object.entries(state).forEach(([key, value]) => {
+                document.querySelectorAll(`[name="${key}"]`).forEach(el => {
+                    if (el.type === 'checkbox') el.checked = value === 'on';
+                    else if (el.type === 'radio') el.checked = (el.value === value);
+                    else el.value = value;
+                });
+            });
+        }
+
+        loadState();
+        document.getElementById('config-form').addEventListener('input', saveState);
+
+        // History management
+        const STORAGE_KEY = 'recorin_history';
+        let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+        function saveHistory(formData) {
+            const current = {};
+            formData.forEach((value, key) => {
+                if (value && typeof value === 'string' && value.trim() !== '') {
+                    current[key] = value;
+                }
+            });
+            
+            Object.keys(current).forEach(key => {
+                if (!history[key]) history[key] = [];
+                if (!history[key].includes(current[key])) {
+                    history[key].unshift(current[key]);
+                    if (history[key].length > 10) history[key].pop();
+                }
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+            updateSelectors();
+        }
+
+        function updateSelectors() {
+            document.querySelectorAll('.history-select').forEach(select => {
+                const field = select.dataset.field;
+                const options = history[field] || [];
+                select.innerHTML = '<option value="">🕒</option>' + 
+                    options.map(val => `<option value="${val}">${val}</option>`).join('');
+            });
+        }
+
+        document.querySelectorAll('.history-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const field = select.dataset.field;
+                const input = document.getElementById(field);
+                if (input) input.value = e.target.value;
+            });
         });
 
         async function sendRequest(endpoint, formData) {
             try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch(endpoint, { method: 'POST', body: formData });
                 return response.ok;
-            } catch (e) {
-                console.error(e);
-                return false;
-            }
+            } catch (e) { console.error(e); return false; }
         }
 
         document.getElementById('btn-start').addEventListener('click', async () => {
             const form = document.getElementById('config-form');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            
             const formData = new FormData(form);
+            saveHistory(formData);
+            
             const success = await sendRequest('/start', new URLSearchParams(formData));
-            if (success) {
-                window.close();
-            } else {
-                alert('Failed to start the program.');
-            }
+            if (success) { window.close(); } else { alert('Failed to start the program.'); }
         });
 
         document.getElementById('btn-quit').addEventListener('click', async () => {
             const formData = new FormData(document.getElementById('config-form'));
-            // Fire and forget the quit request
-            sendRequest('/quit', new URLSearchParams(formData));
-            await new Promise(r => setTimeout(r, 100));
-            window.close();
+            await sendRequest('/quit', new URLSearchParams(formData));
+            setTimeout(() => {
+                window.close();
+            }, 200);
         });
+
+        updateSelectors();
     </script>
 </body>
 </html>
