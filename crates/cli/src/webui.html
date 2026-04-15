@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recordin Web UI</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: white;
+            --text-main: #333;
+            --text-muted: #666;
+            --border-color: #ccc;
+            --input-bg: #fff;
+            --input-text: #333;
+        }
+        body.dark-theme {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaa;
+            --border-color: #444;
+            --input-bg: #2d2d2d;
+            --input-text: #e0e0e0;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-color); display: flex; justify-content: center; padding: 40px; transition: background 0.3s; }
+        .card { background: var(--card-bg); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 600px; transition: background 0.3s; }
+        h1 { margin-top: 0; color: var(--text-main); text-align: center; }
+        .form-group { margin-bottom: 1rem; display: flex; align-items: center; }
+        .form-group label { flex: 0 0 180px; color: var(--text-muted); }
+        .form-group input[type="text"], .form-group input[type="number"] { flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--input-text); }
+        .checkbox-group { margin-bottom: 1rem; display: flex; gap: 20px; justify-content: center; }
+        .checkbox-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .actions { display: flex; gap: 10px; justify-content: center; margin-top: 2rem; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-start { background: #28a745; color: white; }
+        .btn-start:hover { background: #218838; }
+        .btn-quit { background: #dc3545; color: white; }
+        .btn-quit:hover { background: #c82333; }
+        .theme-switch { position: fixed; top: 20px; left: 20px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-muted); user-select: none; }
+        .theme-switch input { cursor: pointer; }
+    </style>
+</head>
+<body id="body">
+    <div class="theme-switch">
+        <input type="checkbox" id="theme-toggle">
+        <label for="theme-toggle">Dark Mode</label>
+    </div>
+    <div class="card">
+        <h1>Recordin Controller</h1>
+        <form id="config-form">
+
+            <div class="form-group">
+                <label for="executable">Executable Path</label>
+                <input type="text" id="executable" name="executable" required>
+            </div>
+            <div class="form-group">
+                <label for="exec_args">Arguments</label>
+                <input type="text" id="exec_args" name="exec_args">
+            </div>
+            <div class="form-group">
+                <label for="fps">FPS</label>
+                <input type="number" id="fps" name="fps" step="0.1" value="60.0">
+            </div>
+            <div class="form-group">
+                <label>Graphics Hook</label>
+                <div style="display: flex; gap: 2px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0; font-weight: normal; color: #666;">
+                        <input type="radio" name="graphics_hook" value="vulkan"> Vulkan
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0; font-weight: normal; color: #666;">
+                        <input type="radio" name="graphics_hook" value="d3d11" checked> D3D11
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0; font-weight: normal; color: #666;">
+                        <input type="radio" name="graphics_hook" value="none"> None
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Sound Hook</label>
+                <div style="display: flex; gap: 2px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0; font-weight: normal; color: #666;">
+                        <input type="checkbox" name="wasapi" value="on"> WASAPI
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="aggressive_infect">Aggressive Infect</label>
+                <input type="checkbox" id="aggressive_infect" name="aggressive_infect" value="on">
+            </div>
+            <div class="form-group">
+                <label for="target_regex">Target Regex</label>
+                <input type="text" id="target_regex" name="target_regex">
+            </div>
+            <div class="form-group">
+                <label for="force_tick_threshold">Force Tick Threshold</label>
+                <input type="text" id="force_tick_threshold" name="force_tick_threshold">
+            </div>
+            <hr>
+            <div class="form-group">
+                <label for="video_encoder">Video Encoder</label>
+                <input type="text" id="video_encoder" name="video_encoder">
+            </div>
+            <div class="form-group">
+                <label for="video_option">Video Options</label>
+                <input type="text" id="video_option" name="video_option">
+            </div>
+            <div class="form-group">
+                <label for="video_output">Video Output</label>
+                <input type="text" id="video_output" name="video_output">
+            </div>
+            <div class="form-group">
+                <label for="audio_output">Audio Output</label>
+                <input type="text" id="audio_output" name="audio_output">
+            </div>
+            <div class="actions">
+                <button type="button" id="btn-start" class="btn-start">Start</button>
+                <button type="button" id="btn-quit" class="btn-quit">Quit</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.getElementById('body');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                body.classList.add('dark-theme');
+            } else {
+                body.classList.remove('dark-theme');
+            }
+            themeToggle.checked = isDark;
+        }
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark);
+
+        themeToggle.addEventListener('change', () => {
+            applyTheme(themeToggle.checked);
+        });
+
+        async function sendRequest(endpoint, formData) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+                return response.ok;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        }
+
+        document.getElementById('btn-start').addEventListener('click', async () => {
+            const form = document.getElementById('config-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            const success = await sendRequest('/start', new URLSearchParams(formData));
+            if (success) {
+                window.close();
+            } else {
+                alert('Failed to start the program.');
+            }
+        });
+
+        document.getElementById('btn-quit').addEventListener('click', async () => {
+            const formData = new FormData(document.getElementById('config-form'));
+            // Fire and forget the quit request
+            sendRequest('/quit', new URLSearchParams(formData));
+            await new Promise(r => setTimeout(r, 100));
+            window.close();
+        });
+    </script>
+</body>
+</html>
